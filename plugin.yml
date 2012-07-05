@@ -1,0 +1,9 @@
+name: SkyFall
+main: fromgate.skyfall.SkyFall
+version: 0.0.1
+author: fromgate, fromgate@gmail.com
+commands:
+   skyfall:
+      description: 
+      usage: 
+           /skyfall help
