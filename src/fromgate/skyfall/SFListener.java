@@ -47,7 +47,8 @@ public class SFListener implements Listener{
 	@EventHandler (priority = EventPriority.NORMAL)
 	public void onPlayerJoin (PlayerJoinEvent event){
 		u.UpdateMsg(event.getPlayer());
-		if (plg.pset.containsKey(event.getPlayer().getName()))	plg.pset.remove(event.getPlayer().getName());
+		if (plg.pset.containsKey(event.getPlayer().getName()))
+			plg.pset.remove(event.getPlayer().getName());
 	}
 
 

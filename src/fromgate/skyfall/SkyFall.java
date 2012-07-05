@@ -75,15 +75,19 @@ public class SkyFall extends JavaPlugin {
 
 	@Override
 	public void onEnable() {
-		
-		sfl =  new SFListener (this);
-		sfcmd = new SFCmd (this);
-		getCommand("skyfall").setExecutor(sfcmd);
-		PluginManager pm = this.getServer().getPluginManager();
-		pm.registerEvents(sfl, this);
+
 		LoadCfg();
 		SaveCfg();
+		
 		u = new FGUtil (this, vcheck, save_lng, language);
+		sfcmd = new SFCmd (this);
+		getCommand("skyfall").setExecutor(sfcmd);
+		sfl =  new SFListener (this);
+		
+		PluginManager pm = this.getServer().getPluginManager();
+		pm.registerEvents(sfl, this);
+
+		
 		
 		LoadWorldLinks();
 		
