@@ -1,9 +1,10 @@
 name: SkyFall
 main: fromgate.skyfall.SkyFall
-version: 0.0.1
+version: 0.0.2
 author: fromgate, fromgate@gmail.com
+softdepend: [Multiverse-Core,MultiWorld]
 commands:
    skyfall:
-      description: 
+      description: SkyFall configuration command 
       usage: 
            /skyfall help

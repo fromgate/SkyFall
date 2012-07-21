@@ -35,7 +35,7 @@ import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
 public class SFListener implements Listener{
 	SkyFall plg;
-	FGUtil u;
+	FGUtilCore u;
 
 	public SFListener (SkyFall plg){
 		this.plg = plg;
@@ -47,22 +47,19 @@ public class SFListener implements Listener{
 	@EventHandler (priority = EventPriority.NORMAL)
 	public void onPlayerJoin (PlayerJoinEvent event){
 		u.UpdateMsg(event.getPlayer());
-		if (plg.pset.containsKey(event.getPlayer().getName()))
-			plg.pset.remove(event.getPlayer().getName());
 	}
 
 
 	@EventHandler (priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onPlayerMove (PlayerMoveEvent event){
 		Player p = event.getPlayer();
-		if ((plg.worlds.size()>0)&&((p.getLocation().getY()<=0)||(p.getLocation().getY()>=256))){
-			String wn = p.getWorld().getName();
+		String wn = p.getWorld().getName();
+		if ((plg.worlds.size()>0)&&((p.getLocation().getY()<plg.worlds.get(wn).depth)||(p.getLocation().getY()>plg.worlds.get(wn).height))&&p.hasPermission("skyfall.relocation")){
 			
 
-
-			if ((p.getLocation().getY()<0)&&((!plg.worlds.get(wn).world_under.isEmpty()))){
+			if ((p.getLocation().getY()<plg.worlds.get(wn).depth)&&((!plg.worlds.get(wn).world_under.isEmpty()))){
 				// Падение
-				Location loc = plg.getFallLocation(p.getLocation(), 255, plg.worlds.get(wn).world_under, plg.fall_random_radius);
+				Location loc = plg.getFallLocation(p.getLocation(), plg.worlds.get(plg.worlds.get(wn).world_under).height, plg.worlds.get(wn).world_under, plg.fall_random_radius);
 
 
 
@@ -72,39 +69,20 @@ public class SFListener implements Listener{
 
 				if (plg.showmsg) u.PrintMSG (p, "msg_fallmsg",plg.worlds.get(wn).world_under);  
 
-			} else if ((p.getLocation().getY()>=256)&&((!plg.worlds.get(wn).world_above.isEmpty()))){
+			} else if ((p.getLocation().getY()>plg.worlds.get(wn).height)&&((!plg.worlds.get(wn).world_above.isEmpty()))){
 				// Взлёт ;)
-				Location loc = plg.getFallLocation(p.getLocation(), 1, plg.worlds.get(wn).world_above, 0);
+				Location loc = plg.getFallLocation(p.getLocation(), plg.worlds.get(plg.worlds.get(wn).world_above).depth, plg.worlds.get(wn).world_above, 0);
 				while (!loc.getChunk().isLoaded())
 					loc.getChunk().load();
 
 				p.teleport(loc, TeleportCause.PLUGIN);
-				if (plg.showmsg) u.PrintMSG (p, "msg_climbmsg",plg.worlds.get(wn).world_under);
+				if (plg.showmsg) u.PrintMSG (p, "msg_climbmsg",plg.worlds.get(wn).world_above);
 
 
 				///////////////////////////////////////////////////////////////////////
 				// Нужно продумать как наиболее эффективно сделать "подставку" 
 				// для поднимающегося игрока
 				///////////////////////////////////////////////////////////////////////
-				/*loc.getBlock().getRelative(BlockFace.DOWN).setType(Material.GLASS);
-
-				if (loc.getBlock().getRelative(BlockFace.DOWN).getType()==Material.AIR) p.sendBlockChange(loc.add(0,-1,0), Material.GLASS, (byte) 0);
-				if (loc.getBlock().getType()!=Material.AIR) p.sendBlockChange(loc, Material.AIR, (byte) 0);
-				if (loc.getBlock().getRelative(BlockFace.UP).getType()!=Material.AIR) p.sendBlockChange(loc.add(0,1,0), Material.AIR, (byte) 0);  */
-
-
-
-				/*				final Location l = loc;
-				final Player pp = p;
-
-				plg.getServer().getScheduler().scheduleSyncDelayedTask(plg, new Runnable() {
-					public void run() {
-						if (l.getBlock().getType()!=Material.AIR) pp.sendBlockChange(l, Material.AIR, (byte) 0);
-						if (l.getBlock().getRelative(BlockFace.UP).getType()!=Material.AIR) pp.sendBlockChange(l.add(0,1,0), Material.AIR, (byte) 0);
-						if (l.getBlock().getRelative(BlockFace.DOWN).getType()==Material.AIR) pp.sendBlockChange(l.add(0,-1,0), Material.GLASS, (byte) 0);
-						pp.teleport(l);
-					}
-				}, 10L); */
 
 
 			}
@@ -113,9 +91,6 @@ public class SFListener implements Listener{
 
 
 	}
-
-
-
 
 
 }

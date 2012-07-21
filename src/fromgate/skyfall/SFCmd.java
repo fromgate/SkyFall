@@ -37,7 +37,6 @@ public class SFCmd implements CommandExecutor{
 	public SFCmd (SkyFall plg){
 		this.plg = plg;
 		this.u = this.plg.u;
-
 	}
 
 
@@ -47,15 +46,11 @@ public class SFCmd implements CommandExecutor{
 		if (sender instanceof Player){
 			Player p = (Player) sender;
 			if ((args.length>0)&&(u.CheckCmdPerm(p, args[0]))){
-				
-				if (!plg.pset.containsKey(p.getName())) plg.pset.put(p.getName(), new PCfg(p));
-				
-				
 				if (args.length==1) return ExecuteCmd (p, args[0]);
 				else if (args.length==2) return ExecuteCmd (p, args[0],args[1]);
 				else if (args.length==3) return ExecuteCmd (p, args[0],args[1],args[2]);
 				else if (args.length==4) return ExecuteCmd (p, args[0],args[1],args[2],args[3]);
-			} u.PrintMSG(p, "cmd_wrong",'c');
+			} else u.PrintMSG(p, "cmd_cmdpermerr",'c');
 		} 
 		return false;
 	}
@@ -64,23 +59,32 @@ public class SFCmd implements CommandExecutor{
 		if (cmd.equalsIgnoreCase("help")){
 			u.PrintHLP(p);
 			return true;
-		} else if (cmd.equalsIgnoreCase("setuw")){
-			plg.pset.get(p.getName()).world_under="";
-			u.PrintMSG(p, "msg_wuadd_empty");
+		} else if (cmd.equalsIgnoreCase("under")){
+			plg.worlds.get(p.getWorld().getName()).world_under="";
+			plg.SaveWorldLinks();
+			u.PrintMSG(p, "msg_wuadd_empty",p.getWorld().getName());
 			return true;
-		} else if (cmd.equalsIgnoreCase("setaw")){
-			plg.pset.get(p.getName()).world_above="";
-			u.PrintMSG(p, "msg_waadd_empty");
-			return true;
+		} else if (cmd.equalsIgnoreCase("above")){
+			plg.worlds.get(p.getWorld().getName()).world_above="";
+			plg.SaveWorldLinks();
+			u.PrintMSG(p, "msg_waadd_empty",p.getWorld().getName());
+			return true; 
 		} else if (cmd.equalsIgnoreCase("cfg")){
 			u.PrintCfg(p);
 			return true;
+		} else if (cmd.equalsIgnoreCase("clearworldlinks")){
+			plg.worlds.clear();
+			plg.InitWorlds();
+			plg.SaveWorldLinks();
+			u.PrintMSG(p, "msg_clearworldlinks");
+			return true;
 		} else if (cmd.equalsIgnoreCase("reload")){
 			plg.LoadCfg();
+			plg.InitWorlds();
 			plg.LoadWorldLinks();
+			plg.SaveWorldLinks();
 			u.PrintMSG(p, "msg_reloaded");
 			return true;
-			
 		} else if (cmd.equalsIgnoreCase("list")){
 			if (plg.worlds.size()>0){
 				u.PrintMSG(p, "msg_list",'6');
@@ -89,32 +93,10 @@ public class SFCmd implements CommandExecutor{
 				}				
 			} else u.PrintMSG(p, "msg_listempty",'e');
 			return true;
-
-		} else if (cmd.equalsIgnoreCase("add")){
-			PCfg pc = plg.pset.get(p.getName());
-			if ((!pc.world.isEmpty())&&
-					(pc.x1!=pc.x2)&&
-					(pc.z1!=pc.z2)/*&&
-					((!pc.world_above.isEmpty())||(!pc.world_under.isEmpty()))*/){
-				int x1 = Math.min(pc.x1, pc.x2);
-				int z1 = Math.min(pc.z1, pc.z2);
-				int x2 = Math.max(pc.x1, pc.x2);
-				int z2 = Math.max(pc.z1, pc.z2);
-
-				plg.worlds.put(pc.world, new WorldLink (x1, z1, x2, z2, pc.world_under, pc.world_above));
-				plg.SaveWordLinks();
-
-				u.PrintMSG (p,"msg_wladded",pc.world);
-				if (pc.world_above.isEmpty()&&pc.world_under.isEmpty()) u.PrintMSG(p, "msg_warnlinks",pc.world);
-				
-				plg.pset.put(p.getName(), new PCfg(p)); //очищаем персональный конфиг
-				
-			} else u.PrintMSG(p, "msg_wlundefined");
+		} else u.PrintMSG(p, "msg_wlundefined");
 
 
-			return true;
 
-		}
 		return false;
 	}
 
@@ -123,24 +105,37 @@ public class SFCmd implements CommandExecutor{
 
 	//команда + параметры
 	public boolean ExecuteCmd (Player p, String cmd, String arg){
+		String wn = p.getWorld().getName();
 
-		if (cmd.equalsIgnoreCase("setuw")){
-			World w = Bukkit.getWorld(arg);
-			
-			if (w != null){
-				plg.pset.get(p.getName()).world_under=w.getName();
-				u.PrintMSG(p, "msg_wuadd");
-				u.PrintMsg(p, plg.PlayerConfigToStr(p.getName()));
-			} else u.PrintMSG(p,"msg_worldunknown",arg);
-			return true;
-		} else if (cmd.equalsIgnoreCase("setaw")){
+		if (cmd.equalsIgnoreCase("under")){
 			World w = Bukkit.getWorld(arg);
 			if (w != null){
-				plg.pset.get(p.getName()).world_above=w.getName();
-				u.PrintMSG(p, "msg_waadd");
-				u.PrintMsg(p, plg.PlayerConfigToStr(p.getName()));
+				plg.worlds.get(wn).world_under=w.getName();
+				plg.SaveWorldLinks();
+				u.PrintMSG(p, "msg_wuadd",wn+";"+w.getName());
 			} else u.PrintMSG(p,"msg_worldunknown",arg);
 			return true;
+		} else if (cmd.equalsIgnoreCase("above")){
+			World w = Bukkit.getWorld(arg);
+			if (w != null){
+				plg.worlds.get(wn).world_above=w.getName();
+				plg.SaveWorldLinks();
+				u.PrintMSG(p, "msg_waadd",wn+";"+w.getName());
+			} else u.PrintMSG(p,"msg_worldunknown",arg);
+			return true;
+		} else if (cmd.equalsIgnoreCase("height")){
+			if (arg.matches("[1-9]+[0-9]*")){
+				plg.worlds.get(wn).height = Integer.parseInt(arg);
+				plg.SaveWorldLinks();
+				u.PrintMSG(p, "msg_height",wn+";"+arg);			
+			} else u.PrintMSG(p,"msg_wrongheight",arg);
+		} else if (cmd.equalsIgnoreCase("depth")){
+			if (arg.matches("[1-9]+[0-9]*")){
+				plg.worlds.get(wn).depth = Integer.parseInt(arg);
+				plg.SaveWorldLinks();
+				u.PrintMSG(p, "msg_depth",wn+";"+arg);			
+			} else u.PrintMSG(p,"msg_wrongdepth",arg);
+
 		} else if (cmd.equalsIgnoreCase("help")){
 			u.PrintHLP(p, arg);
 			return true;
@@ -152,45 +147,87 @@ public class SFCmd implements CommandExecutor{
 
 	//команда + 2 параметра
 	public boolean ExecuteCmd (Player p, String cmd, String arg1, String arg2){
-		if (cmd.equalsIgnoreCase("setc")){
+
+		if (cmd.equalsIgnoreCase("area")){
 			String [] c1 = arg1.split(",");
 			String [] c2 = arg2.split(",");
-//if ((c1.length==2)&&(c1[0].matches("^(\\+?\\-? *[0-9]+)[0-9]*"))&&(c1[1].matches("-{,1}[1-9]+[0-9]*"))&&
 			if ((c1.length==2)&&(c1[0].matches("^(\\+?\\-? *[0-9]+)[0-9]*"))&&(c1[1].matches("^(\\+?\\-? *[0-9]+)[0-9]*"))&&
 					(c2.length==2)&&(c2[0].matches("^(\\+?\\-? *[0-9]+)[0-9]*"))&&(c2[1].matches("^(\\+?\\-? *[0-9]+)[0-9]*"))){
 				String wn = p.getWorld().getName();
-				plg.pset.get(p.getName()).world = wn;
-				plg.pset.get(p.getName()).x1 = Integer.parseInt(c1[0]);
-				plg.pset.get(p.getName()).z1 = Integer.parseInt(c1[1]);
-				plg.pset.get(p.getName()).x2 = Integer.parseInt(c2[0]);
-				plg.pset.get(p.getName()).z2 = Integer.parseInt(c2[1]);
-
-				u.PrintMSG(p, "msg_coordadd");
-				u.PrintMsg(p, plg.PlayerConfigToStr(p.getName()));
+				plg.worlds.get(wn).x1=Integer.parseInt(c1[0]);
+				plg.worlds.get(wn).z1=Integer.parseInt(c1[1]);
+				plg.worlds.get(wn).x2=Integer.parseInt(c2[0]);
+				plg.worlds.get(wn).z2=Integer.parseInt(c2[1]);
+				plg.SaveWorldLinks();
+				u.PrintMSG(p, "msg_worldcoord",wn+";"+arg1+";"+arg2);
 			} else u.PrintMSG (p,"msg_wrongcoord",arg1+";"+arg2);
 			return true;
+		} else if (cmd.equalsIgnoreCase("under")){
+
+			if (Bukkit.getWorld(arg1) == null) {
+				u.PrintMSG(p,"msg_worldunknown",arg1);
+				return true;
+			}
+
+			World w = Bukkit.getWorld(arg2);
+
+			if (w != null){
+				plg.worlds.get(arg1).world_under=w.getName();
+				plg.SaveWorldLinks();
+				u.PrintMSG(p, "msg_wuadd",arg1+";"+w.getName());
+			} else u.PrintMSG(p,"msg_worldunknown",arg2);
+			return true;
+		} else if (cmd.equalsIgnoreCase("above")){
+
+			if (Bukkit.getWorld(arg1) == null) {
+				plg.SaveWorldLinks();
+				u.PrintMSG(p,"msg_worldunknown",arg1);
+				return true;
+			}
+
+			World w = Bukkit.getWorld(arg2);
+			if (w != null){
+				plg.worlds.get(arg1).world_above=w.getName();
+				plg.SaveWorldLinks();
+				u.PrintMSG(p, "msg_waadd",arg1+";"+w.getName());
+			} else u.PrintMSG(p,"msg_worldunknown",arg2);
+			return true;
+		} else if (cmd.equalsIgnoreCase("height")){
+			World w = Bukkit.getWorld(arg2);
+			if (w != null){
+				if (arg2.matches("[1-9]+[0-9]*")){
+					plg.worlds.get(w.getName()).height = Integer.parseInt(arg2);
+					plg.SaveWorldLinks();
+					u.PrintMSG(p, "msg_height",w.getName()+";"+arg2);			
+				} else u.PrintMSG(p,"msg_wrongheight",arg2);
+			} else u.PrintMSG(p,"msg_worldunknown",arg2);
+		} else if (cmd.equalsIgnoreCase("depth")){
+			World w = Bukkit.getWorld(arg2);
+			if (w != null){
+				if (arg2.matches("[1-9]+[0-9]*")){
+					plg.worlds.get(w.getName()).depth = Integer.parseInt(arg2);
+					plg.SaveWorldLinks();
+					u.PrintMSG(p, "msg_depth",w.getName()+";"+arg2);			
+				} else u.PrintMSG(p,"msg_wrongdepth",arg2);
+			} else u.PrintMSG(p,"msg_worldunknown",arg2);			
 		}
 		return false;
 	}
 
 	//команда + 3 параметра
 	public boolean ExecuteCmd (Player p, String cmd, String arg1, String arg2, String arg3){
-		if (cmd.equalsIgnoreCase("setc")){
+		if (cmd.equalsIgnoreCase("area")){
 			if (Bukkit.getWorld(arg1)!=null){
-
-
 				String [] c1 = arg2.split(",");
 				String [] c2 = arg3.split(",");
 				if ((c1.length==2)&&(c1[0].matches("^(\\+?\\-? *[0-9]+)[0-9]*"))&&(c1[1].matches("^(\\+?\\-? *[0-9]+)[0-9]*"))&&
 						(c2.length==2)&&(c2[0].matches("^(\\+?\\-? *[0-9]+)[0-9]*"))&&(c2[1].matches("^(\\+?\\-? *[0-9]+)[0-9]*"))){
-
-					plg.pset.get(p.getName()).world = arg1;
-					plg.pset.get(p.getName()).x1 = Integer.parseInt(c1[0]);
-					plg.pset.get(p.getName()).z1 = Integer.parseInt(c1[1]);
-					plg.pset.get(p.getName()).x2 = Integer.parseInt(c2[0]);
-					plg.pset.get(p.getName()).z2 = Integer.parseInt(c2[1]);
-					u.PrintMSG(p, "msg_curcoord",arg1+";"+arg2+";"+arg3);
-
+					plg.worlds.get(arg1).x1=Integer.parseInt(c1[0]);
+					plg.worlds.get(arg1).z1=Integer.parseInt(c1[1]);
+					plg.worlds.get(arg1).x2=Integer.parseInt(c2[0]);
+					plg.worlds.get(arg1).z2=Integer.parseInt(c2[1]);
+					plg.SaveWorldLinks();
+					u.PrintMSG(p, "msg_worldcoord",arg1+";"+arg2+";"+arg3);
 				} else u.PrintMSG (p,"msg_wrongcoord",arg2+";"+arg3);
 
 			} else u.PrintMSG(p,"msg_worldunknown",arg1);

@@ -27,14 +27,18 @@ public class WorldLink{
 	int z1;
 	int x2;
 	int z2;
+	int height;
+	int depth;
 	String world_under;
 	String world_above;
 
-	public WorldLink (int x1, int z1, int x2, int z2, String world_under, String world_above){
+	public WorldLink (int x1, int z1, int x2, int z2, int h, int d, String world_under, String world_above){
 		this.x1 = x1;
 		this.z1 = z1;
 		this.x2 = x2;
 		this.z2 = z2;
+		this.height = h;
+		this.depth = d;
 		this.world_under = world_under;
 		this.world_above = world_above;
 	}
