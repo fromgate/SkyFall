@@ -20,26 +20,38 @@
  * 
  */
 
-package fromgate.skyfall;
+package me.fromgate.skyfall;
 
-import org.bukkit.entity.Player;
 
-public 	class PCfg{
-	String world;
-	int x1;
-	int z1;
-	int x2;
-	int z2;
-	String world_under;
-	String world_above;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 
-	public PCfg (Player p){
-		this.world = p.getWorld().getName();
-		this.x1 = p.getLocation().getBlockX();
-		this.z1 = p.getLocation().getBlockZ();
-		this.x2 = p.getLocation().getBlockX();
-		this.z2 = p.getLocation().getBlockZ();
-		this.world_under="";
-		this.world_above="";
+
+public class SFListener implements Listener{
+	SkyFall plg;
+	FGUtilCore u;
+
+	public SFListener (SkyFall plg){
+		this.plg = plg;
+		this.u = plg.u;
 	}
+
+	@EventHandler (priority = EventPriority.NORMAL)
+	public void onPlayerJoin (PlayerJoinEvent event){
+		u.UpdateMsg(event.getPlayer());
+	}
+
+	@EventHandler (priority = EventPriority.NORMAL, ignoreCancelled = true)
+	public void onPlayerMove (PlayerMoveEvent event){
+		plg.worlds.teleportPlayer(event.getPlayer());
+	}
+
+
 }
+
+
+
+

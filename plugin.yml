@@ -1,6 +1,6 @@
 name: SkyFall
-main: fromgate.skyfall.SkyFall
-version: 0.0.2
+main: me.fromgate.skyfall.SkyFall
+version: 0.1.0
 author: fromgate, fromgate@gmail.com
 softdepend: [Multiverse-Core,MultiWorld]
 commands:
